@@ -68,6 +68,12 @@ if uploaded_file:
                     xref='paper', x0=0, x1=1,
                     yref='y', y0=0.2, y1=0.2,
                     line=dict(color='red', width=2, dash='dash')
+                ),
+                dict(
+                    type='line',
+                    xref='paper', x0=0, x1=1,
+                    yref='y', y0=-0.2, y1=-0.2,
+                    line=dict(color='red', width=2, dash='dash')
                 )
             ]
 
