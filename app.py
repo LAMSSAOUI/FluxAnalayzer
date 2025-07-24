@@ -25,8 +25,8 @@ if uploaded_file:
             st.warning("No week columns found (starting with 'wk').")
         else:
             # Clean % signs
-            for col in wk_cols + ['Deficit quantity']:
-                df_selected[col] = df_selected[col].replace('%', '', regex=True).astype(float) / 100.0
+            # for col in wk_cols + ['Deficit quantity']:
+            #     df_selected[col] = df_selected[col].replace('%', '', regex=True).astype(float) / 100.0
 
             # Melt to long format
             df_long = df_selected.melt(
@@ -46,6 +46,8 @@ if uploaded_file:
             week_order = ['Deficit'] + wk_cols
             df_long['Week'] = pd.Categorical(df_long['Week'], categories=week_order, ordered=True)
             df_long = df_long.sort_values(['Material', 'Week'])
+
+           
 
             fig = px.line(
                 df_long,
