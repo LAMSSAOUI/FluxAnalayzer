@@ -119,15 +119,24 @@ if uploaded_file:
             
             # Filter for frozen weeks
             frozen_data = all_frozen_data[all_frozen_data['Week'].isin(frozen_weeks)].copy()
-            
-            # Convert fluctuation to numeric
-            frozen_data['Fluctuation'] = pd.to_numeric(
-                frozen_data['Fluctuation'].replace('%', '', regex=True),
-                errors='coerce'
-            ) / 100.0
 
+            # st.markdown("### frozen_data")
+            # st.dataframe(frozen_data)
+            
+            # # Convert fluctuation to numeric
+            # frozen_data['Fluctuation'] = pd.to_numeric(
+            #     frozen_data['Fluctuation'].replace('%', '', regex=True),
+            #     errors='coerce'
+            # ) / 100.0
+
+            # st.markdown("### frozen_data['Fluctuation']")
+            # st.dataframe(frozen_data['Fluctuation'])
             # Create critical parts dashboard
             critical_data = frozen_data[frozen_data['Fluctuation'] > 0.2].copy()
+
+            # st.markdown("### critical_data")
+            # st.dataframe(critical_data)
+
             
             if not critical_data.empty:
                 # Create columns for metrics
