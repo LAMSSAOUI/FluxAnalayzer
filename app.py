@@ -6,18 +6,18 @@ import io
 st.set_page_config(page_title="Fluctuation Dashboard", layout="wide")
 st.title("📈 Material Fluctuation Visualizer")
 
-uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xlsm"])
 
 if uploaded_file:
     xls = pd.ExcelFile(uploaded_file)
     sheet_name = st.selectbox("Select Sheet", xls.sheet_names)
     df = pd.read_excel(xls, sheet_name=sheet_name)
 
-    if 'Material type' not in df.columns:
+    if 'Production line' not in df.columns:
         st.error("❌ The selected sheet does not contain 'Material type' column.")
     else:
-        project = st.selectbox("Select Project", sorted(df['Material type'].dropna().unique()))
-        df_selected = df[df['Material type'] == project].copy()
+        project = st.selectbox("Select Project", sorted(df['Production line'].dropna().unique()))
+        df_selected = df[df['Production line'] == project].copy()
 
         # Detect week columns
         wk_cols = [col for col in df_selected.columns if col.lower().startswith('wk')]
@@ -30,14 +30,14 @@ if uploaded_file:
 
             # Melt to long format
             df_long = df_selected.melt(
-                id_vars=['Material', 'Material type', 'Deficit quantity'],
+                id_vars=['Material', 'Production line', 'Deficit quantity'],
                 value_vars=wk_cols,
                 var_name='Week',
                 value_name='Fluctuation'
             )
 
             # Add the "Deficit" as first week-like value
-            deficit_rows = df_selected[['Material', 'Material type', 'Deficit quantity']].copy()
+            deficit_rows = df_selected[['Material', 'Production line', 'Deficit quantity']].copy()
             deficit_rows['Week'] = 'Deficit'
             deficit_rows['Fluctuation'] = deficit_rows['Deficit quantity']
             df_long = pd.concat([deficit_rows, df_long], ignore_index=True)
@@ -111,7 +111,7 @@ if uploaded_file:
             frozen_weeks = wk_cols[:4]
             # Use original df instead of df_selected to get all projects
             all_frozen_data = df.melt(
-                id_vars=['Material', 'Material type', 'Deficit quantity'],
+                id_vars=['Material', 'Production line', 'Deficit quantity'],
                 value_vars=wk_cols,
                 var_name='Week',
                 value_name='Fluctuation'
@@ -135,7 +135,7 @@ if uploaded_file:
                 with m1:
                     st.metric("Critical Parts", len(critical_data['Material'].unique()))
                 with m2:
-                    st.metric("Projects Affected", len(critical_data['Material type'].unique()))
+                    st.metric("Projects Affected", len(critical_data['Production line'].unique()))
                 with m3:
                     st.metric("Highest Fluctuation", f"{critical_data['Fluctuation'].max():.1%}")
                 with m4:
@@ -146,12 +146,12 @@ if uploaded_file:
                 
                 with col1:
                     # Bar chart for critical parts
-                    critical_summary = critical_data.groupby(['Material', 'Material type'])['Fluctuation'].max().reset_index()
+                    critical_summary = critical_data.groupby(['Material', 'Production line'])['Fluctuation'].max().reset_index()
                     fig_critical = px.bar(
                         critical_summary,
                         x='Material',
                         y='Fluctuation',
-                        color='Material type',
+                        color='Production line',
                         title='Maximum Fluctuation by Critical Part',
                         labels={'Fluctuation': 'Max Fluctuation'},
                         height=400
@@ -162,7 +162,7 @@ if uploaded_file:
                 with col2:
                     # Heatmap by project and week
                     pivot_table = critical_data.pivot_table(
-                        index=['Material type', 'Material'],
+                        index=['Production line', 'Material'],
                         columns='Week',
                         values='Fluctuation',
                         aggfunc='max'
@@ -181,7 +181,7 @@ if uploaded_file:
             st.subheader("Critical Parts Details - All Projects")
 
             # Unique filter values
-            material_types = critical_data['Material type'].unique()
+            material_types = critical_data['Production line'].unique()
             materials = critical_data['Material'].unique()
             weeks = sorted(critical_data['Week'].unique())
 
@@ -194,7 +194,7 @@ if uploaded_file:
             filtered_data = critical_data.copy()
 
             if selected_material_type:
-                filtered_data = filtered_data[filtered_data['Material type'].isin(selected_material_type)]
+                filtered_data = filtered_data[filtered_data['Production line'].isin(selected_material_type)]
 
             if selected_material:
                 filtered_data = filtered_data[filtered_data['Material'].isin(selected_material)]
@@ -204,8 +204,8 @@ if uploaded_file:
 
             # Prepare the table
             detail_data = filtered_data[
-                ['Material type', 'Material', 'Week', 'Fluctuation']
-            ].sort_values(['Material type', 'Material', 'Week'])
+                ['Production line', 'Material', 'Week', 'Fluctuation']
+            ].sort_values(['Production line', 'Material', 'Week'])
 
             detail_data['Fluctuation'] = detail_data['Fluctuation'].map('{:.1%}'.format)
 
