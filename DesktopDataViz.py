@@ -4,7 +4,7 @@ import plotly.express as px
 from PySide6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QLabel,
     QComboBox, QTableView, QMessageBox, QHBoxLayout, QListWidget, QListWidgetItem,
-    QAbstractItemView
+    QAbstractItemView , QFrame, QSizePolicy
 )
 from PySide6.QtCore import Qt, QAbstractTableModel, QUrl
 from PySide6.QtWebEngineWidgets import QWebEngineView
@@ -41,54 +41,201 @@ class FluctuationApp(QWidget):
         self.setWindowTitle("Material Fluctuation Visualizer")
         self.resize(1200, 900)
 
-        self.layout = QVBoxLayout(self)
+        # Styling 
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #f5f7fa;
+                font-family: 'Segoe UI', Arial;
+            }
+            QPushButton {
+                background-color: #4a6fa5;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #3a5a8a;
+            }
+            QComboBox {
+                padding: 6px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                min-width: 200px;
+            }
+            QLabel {
+                color: #374151;
+            }
+            QTableView {
+                background-color: white;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+            }
+            QHeaderView::section {
+                background-color: #e5e7eb;
+                padding: 6px;
+                border: none;
+            }
+            QFrame {
+                background-color: white;
+                border-radius: 8px;
+                border: 1px solid #e5e7eb;
+            }
+        """)
 
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(20, 20, 20, 20)
+        self.main_layout.setSpacing(15)
 
-        self.load_btn = QPushButton("Upload Excel File")
+        # Header section
+        self.header = QHBoxLayout()
+        self.title_label = QLabel("Material Fluctuation Dashboard")
+        self.title_label.setStyleSheet("""
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3a8a;
+        """)
+        self.header.addWidget(self.title_label)
+        self.header.addStretch()
+        
+        # Upload button with icon style
+        self.load_btn = QPushButton("📁 Upload Excel File")
+        self.load_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4a6fa5;
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+        """)
         self.load_btn.clicked.connect(self.load_file)
-        self.layout.addWidget(self.load_btn)
+        self.header.addWidget(self.load_btn)
+        self.main_layout.addLayout(self.header)
 
-
+        # Control panel frame
+        self.control_frame = QFrame()
+        self.control_frame.setStyleSheet("""
+            QFrame {
+                padding: 15px;
+            }
+        """)
+        self.control_layout = QHBoxLayout(self.control_frame)
+        
+        # Sheet selection
         self.sheet_combo = QComboBox()
-        # self.sheet_combo.currentIndexChanged.connect(self.load_sheet_data)
-        self.layout.addWidget(QLabel("Select Sheet:"))
-        self.layout.addWidget(self.sheet_combo)
-        # self.sheet_combo.currentIndexChanged.connect(self.load_sheet_data)
+        self.sheet_combo.setPlaceholderText("Select a sheet...")
         self.sheet_combo.activated.connect(self.load_sheet_data)
-        # Project selector
+        
+        # Project selection
         self.project_combo = QComboBox()
+        self.project_combo.setPlaceholderText("Select a project...")
         self.project_combo.currentIndexChanged.connect(self.update_project_selection)
-        self.layout.addWidget(QLabel("Select Project:"))
-        self.layout.addWidget(self.project_combo)
+        
+        # Add controls to panel
+        self.control_layout.addWidget(QLabel("Sheet:"))
+        self.control_layout.addWidget(self.sheet_combo)
+        self.control_layout.addSpacing(20)
+        self.control_layout.addWidget(QLabel("Project:"))
+        self.control_layout.addWidget(self.project_combo)
+        self.control_layout.addStretch()
+        
+        self.main_layout.addWidget(self.control_frame)
 
-      
+        # Metrics cards
+        self.metrics_frame = QFrame()
+        self.metrics_frame.setStyleSheet("""
+            QFrame {
+                padding: 0px;
+            }
+            QLabel {
+                font-size: 14px;
+            }
+        """)
+        
+        self.metrics_layout = QHBoxLayout(self.metrics_frame)  # THIS IS THE CRUCIAL LINE YOU'RE MISSING
+        self.metrics_layout.setSpacing(15)
+        self.metric_widgets = []  # Store all metric frames
+        metrics = [
+            ("Critical Parts", "0", "#ef4444"),
+            ("Projects Affected", "0", "#3b82f6"),
+            ("Highest Fluctuation", "0%", "#f59e0b"),
+            ("Affected Weeks", "0", "#10b981")
+        ]
+
+        for title, value, color in metrics:
+            frame = QFrame()
+            frame.setStyleSheet(f"""
+                QFrame {{
+                    background-color: white;
+                    border-radius: 8px;
+                    padding: 15px;
+                    border-left: 4px solid {color};
+                }}
+                QLabel#value {{
+                    font-size: 24px;
+                    font-weight: bold;
+                    color: {color};
+                }}
+            """)
+            layout = QVBoxLayout(frame)
+            layout.addWidget(QLabel(title))
+            value_label = QLabel(value)
+            value_label.setObjectName("value")
+            layout.addWidget(value_label)
+            self.metrics_layout.addWidget(frame)
+            self.metric_widgets.append(value_label)  # Store the label reference
+
+        # Now we can access them directly by index
+        self.metric_critical_parts = self.metric_widgets[0]
+        self.metric_projects_affected = self.metric_widgets[1]
+        self.metric_highest_fluctuation = self.metric_widgets[2]
+        self.metric_affected_weeks = self.metric_widgets[3]
+        
+        self.main_layout.addWidget(self.metrics_frame)
+
+        # Chart section
+        self.chart_frame = QFrame()
+        self.chart_frame.setStyleSheet("""
+            QFrame {
+                padding: 15px;
+            }
+        """)
+        self.chart_layout = QVBoxLayout(self.chart_frame)
+        self.chart_layout.addWidget(QLabel("Fluctuation Visualization"))
+        
         self.chart_view = QWebEngineView()
-        self.layout.addWidget(self.chart_view, stretch=3)
+        self.chart_view.setMinimumHeight(500)
+        self.chart_layout.addWidget(self.chart_view)
+        self.main_layout.addWidget(self.chart_frame)
 
-   
-        self.summary_layout = QHBoxLayout()
-        self.metric_critical_parts = QLabel("Critical Parts: 0")
-        self.metric_projects_affected = QLabel("Projects Affected: 0")
-        self.metric_highest_fluctuation = QLabel("Highest Fluctuation: 0%")
-        self.metric_affected_weeks = QLabel("Affected Weeks: 0")
-
-        for w in [self.metric_critical_parts, self.metric_projects_affected,
-                  self.metric_highest_fluctuation, self.metric_affected_weeks]:
-            w.setStyleSheet("font-weight: bold; font-size: 14px; padding: 5px;")
-            self.summary_layout.addWidget(w)
-        self.layout.addLayout(self.summary_layout)
-
+        # Table section
+        self.table_frame = QFrame()
+        self.table_layout = QVBoxLayout(self.table_frame)
+        self.table_layout.addWidget(QLabel("Critical Parts Details"))
         
         self.critical_table = QTableView()
-        self.layout.addWidget(QLabel("Critical Parts Details"))
-        self.layout.addWidget(self.critical_table, stretch=2)
+        self.critical_table.setStyleSheet("""
+            QTableView {
+                border: 1px solid #e5e7eb;
+            }
+            QTableView::item {
+                padding: 8px;
+            }
+        """)
+        self.critical_table.horizontalHeader().setDefaultAlignment(Qt.AlignLeft)
+        self.table_layout.addWidget(self.critical_table)
+        self.main_layout.addWidget(self.table_frame)
 
-     
+        # Data storage
         self.df = None
         self.current_sheet_df = None
 
     def load_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open Excel File", filter="Excel Files (*.xlsx *.xlsm)")
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Open Excel File", 
+            filter="Excel Files (*.xlsx *.xlsm)"
+        )
         if not file_path:
             return
 
@@ -96,9 +243,12 @@ class FluctuationApp(QWidget):
             self.xls = pd.ExcelFile(file_path)
             self.sheet_combo.clear()
             self.sheet_combo.addItems(self.xls.sheet_names)
-            # Auto-select first sheet
-            # self.sheet_combo.setCurrentIndex(0)
-            # self.load_sheet_data()
+            # Show success message
+            QMessageBox.information(
+                self, 
+                "Success", 
+                f"File loaded successfully with {len(self.xls.sheet_names)} sheets."
+            )
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to load Excel file:\n{e}")
 
