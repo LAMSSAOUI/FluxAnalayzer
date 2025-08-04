@@ -50,10 +50,11 @@ class FluctuationApp(QWidget):
 
 
         self.sheet_combo = QComboBox()
-        self.sheet_combo.currentIndexChanged.connect(self.load_sheet_data)
+        # self.sheet_combo.currentIndexChanged.connect(self.load_sheet_data)
         self.layout.addWidget(QLabel("Select Sheet:"))
         self.layout.addWidget(self.sheet_combo)
-
+        # self.sheet_combo.currentIndexChanged.connect(self.load_sheet_data)
+        self.sheet_combo.activated.connect(self.load_sheet_data)
         # Project selector
         self.project_combo = QComboBox()
         self.project_combo.currentIndexChanged.connect(self.update_project_selection)
@@ -96,8 +97,8 @@ class FluctuationApp(QWidget):
             self.sheet_combo.clear()
             self.sheet_combo.addItems(self.xls.sheet_names)
             # Auto-select first sheet
-            self.sheet_combo.setCurrentIndex(0)
-            self.load_sheet_data()
+            # self.sheet_combo.setCurrentIndex(0)
+            # self.load_sheet_data()
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to load Excel file:\n{e}")
 
