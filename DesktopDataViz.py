@@ -8,12 +8,17 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QAbstractTableModel, QUrl
 from PySide6.QtWebEngineWidgets import QWebEngineView
+from PySide6.QtGui import QIcon
+import sys
+import os
+
 
 
 class PandasModel(QAbstractTableModel):
     def __init__(self, df=pd.DataFrame(), parent=None):
         super().__init__(parent)
         self._df = df
+        
 
     def rowCount(self, parent=None):
         return len(self._df.index)
@@ -38,6 +43,16 @@ class PandasModel(QAbstractTableModel):
 class FluctuationApp(QWidget):
     def __init__(self):
         super().__init__()
+
+        icon_path = os.path.join(os.path.dirname(__file__), "Stock-Price-Fluctuations-Picsart-AiImageEnhancer.ico")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+        
+        # Windows taskbar fix
+        if sys.platform == "win32":
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Material.Fluctuation.1.0")
+            
         self.setWindowTitle("Material Fluctuation Visualizer")
         self.resize(1200, 900)
 
@@ -151,7 +166,7 @@ class FluctuationApp(QWidget):
                 font-size: 14px;
             }
         """)
-        
+
         self.metrics_layout = QHBoxLayout(self.metrics_frame)  # THIS IS THE CRUCIAL LINE YOU'RE MISSING
         self.metrics_layout.setSpacing(15)
         self.metric_widgets = []  # Store all metric frames
